@@ -1,1 +1,32 @@
-🌐 Automated Website Monitor
+Automated Website Monitor
+Monitor website uptime and response times from a simple command-line tool. Keeps logs, shows uptime/downtime stats, and can alert you when your website goes down (with sound on Windows). Dockerized for easy cross-platform use!
+------------------------------------------------------------------------------------------------------------------------
+Features:
+Monitor any website’s availability and response time
+Alert when the site is down (beep sound, Windows only)
+Log status history to JSON files
+Analyze existing log files for uptime/downtime statistics
+Run natively or in a Docker container
+------------------------------------------------------------------------------------------------------------------------
+Usage (Docker):
+1    Build the Docker image:
+    docker build -t automated-website-monitor .
+2   Start the monitor with interactive terminal:
+    docker run -it --rm automated-website-monitor
+
+Usage (Python directly)
+If you want to run without Docker (e.g., on Windows):
+
+1   Install dependencies:
+    pip install requests
+2   Run:
+    python ping.py
+
+-------------------------------------------------------------------------------------------------------------------
+How It Works
+Upon launch, the program offers three options:
+
+Start new monitoring session – Enter a URL, duration, and interval to monitor.
+Analyze existing log file – Review detailed stats from previous monitoring sessions.
+List all log files – See available logs from previous runs.
+Logs are saved in a Logs/ subfolder as JSON files. All stats can be analyzed later.

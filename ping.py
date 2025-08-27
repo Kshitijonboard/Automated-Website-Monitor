@@ -2,9 +2,15 @@ import requests
 import time
 import json
 import os
+import sys
 from datetime import datetime, timedelta
 from threading import Thread
-import winsound  # For Windows alert sound
+
+
+if sys.platform == "win32":
+    import winsound
+else:
+    winsound = None
 
 class WebsiteMonitor:
     def __init__(self, url, check_interval=30, timeout=10):
@@ -73,19 +79,20 @@ class WebsiteMonitor:
             json.dump(logs, f, indent=2)
     
     def send_alert(self, status_data):
-        """Send alert when website goes down"""
         print("\n" + "="*60)
         print("🚨 ALERT: WEBSITE DOWN! 🚨")
         print(f"URL: {self.url}")
         print(f"Time: {status_data['timestamp']}")
         print(f"Error: {status_data['error']}")
         print("="*60 + "\n")
-        
-        # Play Windows alert sound
-        try:
-            winsound.Beep(1000, 500)  # Frequency, Duration
-        except:
-            pass  # If not on Windows, skip sound
+    # Play Windows alert sound if on Windows
+        if winsound:
+            try:
+                winsound.Beep(1000, 500)
+            except:
+                pass  # If there is a problem, skip sound
+        else:
+            pass  # Optionally, you could print('\a') to attempt a beep on Linux/Mac
     
     def display_status(self, status_data, check_number):
         """Display current status with check number"""
