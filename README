@@ -30,3 +30,6 @@ Start new monitoring session – Enter a URL, duration, and interval to monitor.
 Analyze existing log file – Review detailed stats from previous monitoring sessions.
 List all log files – See available logs from previous runs.
 Logs are saved in a Logs/ subfolder as JSON files. All stats can be analyzed later.
+
+------------------------------------------------------------------------------------------------------------------
+Users can easily pull the image from Dockerhub using the URL: https://hub.docker.com/r/kshitijisin99/automated-website-monitor .
