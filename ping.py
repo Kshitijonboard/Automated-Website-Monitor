@@ -1,3 +1,4 @@
+
 import requests
 import time
 import json
@@ -5,6 +6,9 @@ import os
 import sys
 from datetime import datetime, timedelta
 from threading import Thread
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 if sys.platform == "win32":
@@ -13,24 +17,48 @@ else:
     winsound = None
 
 class WebsiteMonitor:
-    def __init__(self, url, check_interval=30, timeout=10):
+    def __init__(self, url, check_interval=30, timeout=10, user_email=None, sender_email=None, sender_password=None):
         self.url = url
         self.check_interval = check_interval
         self.timeout = timeout
         self.is_running = False
         self.status_history = []
-        
+        self.user_email = user_email
+        self.sender_email = sender_email
+        self.sender_password = sender_password
+
         # Create Logs directory if it doesn't exist
         self.log_dir = "Logs"
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
             print(f"📁 Created '{self.log_dir}' directory for storing logs")
-        
+
         # Create log file in Logs directory
         log_filename = f"monitor_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         self.log_file = os.path.join(self.log_dir, log_filename)
         self.last_status = None
-        
+
+    def send_email_notification(self, status_data):
+        if not (self.user_email and self.sender_email and self.sender_password):
+            print("[!] Email credentials not set. Skipping email notification.")
+            return
+        try:
+            subject = f"[ALERT] Website DOWN: {self.url}"
+            body = f"The monitored website is DOWN!\n\nURL: {self.url}\nTime: {status_data['timestamp']}\nError: {status_data['error']}\n"
+            msg = MIMEMultipart()
+            msg['From'] = self.sender_email
+            msg['To'] = self.user_email
+            msg['Subject'] = subject
+            msg.attach(MIMEText(body, 'plain'))
+
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
+            server.login(self.sender_email, self.sender_password)
+            server.sendmail(self.sender_email, self.user_email, msg.as_string())
+            server.quit()
+            print(f"📧 Email notification sent to {self.user_email}")
+        except Exception as e:
+            print(f"[!] Failed to send email notification: {e}")
     def check_website(self):
         """Check if website is accessible"""
         try:
@@ -85,14 +113,14 @@ class WebsiteMonitor:
         print(f"Time: {status_data['timestamp']}")
         print(f"Error: {status_data['error']}")
         print("="*60 + "\n")
-    # Play Windows alert sound if on Windows
+        # Play Windows alert sound if on Windows
         if winsound:
             try:
                 winsound.Beep(1000, 500)
             except:
                 pass  # If there is a problem, skip sound
-        else:
-            pass  # Optionally, you could print('\a') to attempt a beep on Linux/Mac
+        # Send email notification
+        self.send_email_notification(status_data)
     
     def display_status(self, status_data, check_number):
         """Display current status with check number"""
@@ -281,21 +309,25 @@ def analyze_log_file(log_file):
 if __name__ == "__main__":
     print("🌐 Website Monitoring Tool")
     print("="*40)
-    
+
     # Show menu
     print("\nOptions:")
     print("1. Start new monitoring session")
     print("2. Analyze existing log file")
     print("3. List all log files")
-    
+
     choice = input("\nSelect option (1-3): ").strip()
-    
+
     if choice == '1':
         # Get user input for monitoring
         url = input("Enter the URL to monitor: ").strip()
         if not url.startswith(('http://', 'https://')):
             url = 'https://' + url
-        
+
+        user_email = input("Enter your email address to receive alerts: ").strip()
+        sender_email = input("Enter the sender Gmail address (for sending alerts): ").strip()
+        sender_password = input("Enter the sender Gmail app password: ").strip()
+
         try:
             duration = float(input("Enter monitoring duration (minutes): "))
             interval = int(input("Enter check interval (seconds) [default: 30]: ") or "30")
@@ -303,22 +335,22 @@ if __name__ == "__main__":
             print("Invalid input. Using defaults.")
             duration = 5
             interval = 30
-        
+
         # Create monitor instance
-        monitor = WebsiteMonitor(url, check_interval=interval)
-        
+        monitor = WebsiteMonitor(url, check_interval=interval, user_email=user_email, sender_email=sender_email, sender_password=sender_password)
+
         try:
             # Start monitoring
             monitor.monitor(duration)
         except KeyboardInterrupt:
             print("\n\n⚠️  Monitoring stopped by user")
             monitor.stop_monitoring()
-        
+
         # Ask if user wants to analyze the log
         analyze = input("\nWould you like to analyze the log file now? (y/n): ")
         if analyze.lower() == 'y':
             analyze_log_file(monitor.log_file)
-            
+
     elif choice == '2':
         # List available log files
         log_files = list_log_files()
@@ -334,9 +366,9 @@ if __name__ == "__main__":
             except ValueError:
                 # User entered filename
                 analyze_log_file(file_num)
-                
+
     elif choice == '3':
         list_log_files()
-        
+
     else:
         print("Invalid option selected.")
