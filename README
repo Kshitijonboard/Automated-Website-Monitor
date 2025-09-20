@@ -1,4 +1,4 @@
-Automated Website Monitor
+Automated Website Monitor.
 Monitor website uptime and response times from a simple command-line tool. Keeps logs, shows uptime/downtime stats, and can alert you when your website goes down (with sound on Windows). Dockerized for easy cross-platform use!
 ------------------------------------------------------------------------------------------------------------------------
 Features:
